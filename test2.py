@@ -79,6 +79,7 @@ def add_by_note(
 
 #  Проверка работы функции.
 add_by_note(goods, 'Яйца гусиные 2 2023-07-15')
+#add_by_note(goods, 'Яйца гусиные 3')
 add_by_note(goods, 'Яйца перепелинные 18 2023-07-22')
 print(f'\nРабота второй функции add_by_note \n\n {goods}')
 
