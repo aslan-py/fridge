@@ -3,7 +3,8 @@
 Нужно написать пять функций, кеоторые будут создавать товары в холодильнике,
 обновлять, удалять, по каждой фффункции будут отдельные описания
 """
-from datetime import datetime
+import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal
 
 # Словарь пустой.
@@ -19,7 +20,10 @@ def add(
     """Функция добавляет товары в словарь goods, обновляя его."""
 
     #  Меняю формат аргумента expiration_date из str --> date.
-    formatted_date = datetime.strptime(expiration_date, '%Y-%m-%d').date()
+    if expiration_date != None:
+        formatted_date = datetime.strptime(expiration_date, '%Y-%m-%d').date()
+    else:
+        formatted_date = None
 
     #  Добавляю в словарь  продукты. Если в словае уже есть дубль, то
     #  добавляю через append , так как дубли продуктов возможны.
@@ -34,11 +38,10 @@ def add(
 
 
 #  проверка работы функции
-add(goods, 'Яйца', Decimal('3'), '2023-10-15')
-add(goods, 'Яйца', Decimal('7'), '2023-10-20')
-add(goods, 'Молоко', Decimal('1.5'), '2023-10-14')
-add(goods, 'Редис', Decimal('4'), '2023-10-14')
+add(goods, 'Яйца', Decimal('3'), '2025-03-31')
+add(goods, 'Молоко', Decimal('7'))
 print(f'Работа первой функции add \n\n {goods}')
+
 
 
 def add_by_note(
@@ -49,40 +52,23 @@ def add_by_note(
 
     #  Разбиваем строку на элементы.
     split_note = str.split(note)
-
+    formatted_date = None
     #  Ищу в цикле дату, если нахожу  дефис среди элементов, значит это дата.
-    for item in split_note:
-        if item[-3:-2] == '-':
-            # Находим индекс элемента.
-            item_index = split_note.index(item)
-            # Вырезаем элемент из списка.
-            formatted_date = split_note.pop(item_index)
-            formatted_date = datetime.strptime(
-                formatted_date, '%Y-%m-%d').date()
-        continue
-    len_note = len(split_note) - 1
-    amount = split_note.pop(len_note)  # Вырезали число.
+    if '-' in split_note[-1]:
+        formatted_date = split_note.pop()
+
+    amount = split_note.pop()  # Вырезали число.
     title = str.join(' ', split_note)  # Объеденяем название товара
     # Итого достали все три элемента pop_item, number_decimal и sum_note
 
     # Дублируем с небольшими корректировками наш основной код
     # добавления товаров.
-    if title in items:
-        items[title].append([
-            {'amount': Decimal(amount), 'expiration_date': formatted_date}
-            ])
-    else:
-        items[title] = [
-            {'amount': Decimal(amount), 'expiration_date': formatted_date}
-            ]
+    add(items, title, amount, formatted_date)
 
 
 #  Проверка работы функции.
-add_by_note(goods, 'Яйца гусиные 2 2023-07-15')
-#add_by_note(goods, 'Яйца гусиные 3')
-add_by_note(goods, 'Яйца перепелинные 18 2023-07-22')
+add_by_note(goods, 'Яйца гусиные 2 2025-04-2')
 print(f'\nРабота второй функции add_by_note \n\n {goods}')
-
 
 def find(
         items:  dict,
@@ -94,13 +80,13 @@ def find(
     found_neddle = []
     #  Перебираю ключи словаря и добавляю в новый лист
     #  при этом привожу все к нижнему регистру.
-    for item in items.keys():
-        if item.lower().find(needle.lower()) >= 0:
-            found_neddle.append(item)
+    for word in items.keys():
+        if word.lower().find(needle.lower()) >= 0: #  если в искомом ключе(или слове) мы находим заданное слово
+            found_neddle.append(word) #  то добавляем это найденное слово в отдельный список
     return found_neddle
 
 
-second_func = find(goods, 'ц')
+second_func = find(goods, 'Яйца')
 #  Проверка работы функции.
 print(f'\nРабота третьей функции find . Нашли {second_func}')
 
@@ -109,23 +95,25 @@ def get_amount(
         items:  dict,
         needle: str
         ) -> Decimal:
+    result = 0
     """Функция возвращакт количество элементов, которые были найдены поиском"""
-
-    amount = []
-    #  Перебираю ключи словаря и добавляю в новый лист
-    #  при этом привожу все к нижнему регистру.
-    for item in items.keys():
-        if item.lower().find(needle.lower()) >= 0:
-            for i in goods[item]:
-                amount.append(i['amount'])
-            #  res = sum(i['amount'] for i in goods[item])
-    result = sum(amount)
-    return Decimal(result)
+    for word in find(items, needle): #  Перебираю слова испоьзуя ранее сделанную фунгкцию find
+        result = result + sum(key['amount'] for key in items[word]) #  Провалился в словарь внутренний, и дкергаю оттуда значения, суммирую результат
+    return (Decimal(result))
 
 
-foth_func = get_amount(goods, 'Яйца')
-print(f'\nРабота четвернтой функции get_amount, сумма равна << {foth_func} >>')
+result = get_amount(goods, 'яйца')
+print(f'\nРабота четвертой функции get_amount. Сумма =  {result}')
 
 
 def get_expired(items, in_advance_days=0):
-    ...
+    s = []
+    for keys, values  in items.items():
+        for value in items[keys]:
+            if value['expiration_date'] != None:
+                if value['expiration_date'] <= datetime.today().date() + timedelta(days = in_advance_days):
+                    s.append((keys,Decimal(value['amount'])))
+    return s
+
+
+print(get_expired(goods,2))
